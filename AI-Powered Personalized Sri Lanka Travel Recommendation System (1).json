@@ -1,0 +1,699 @@
+{
+  "name": "AI-Powered Personalized Sri Lanka Travel Recommendation System",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "travelGroup",
+              "value": "={{ $json.body.travelGroup }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "travelDays",
+              "value": "={{ $json.body.travelDays }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "budgetLevel",
+              "value": "={{ $json.body.budgetLevel }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "interests",
+              "value": "={{ $json.body.interests }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "submittedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "39b06ba2-d93c-4e76-ac55-ffd1da5e03f1",
+      "name": "Prepare Form Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "hIKI1zVRu0fmzY6v",
+          "mode": "list",
+          "cachedResultName": "TrippoBot_InputDB",
+          "cachedResultUrl": "/projects/fMufhSNxKBm8KnIm/datatables/hIKI1zVRu0fmzY6v"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "travelGroup": "={{ $json.travelGroup }}",
+            "travelDays": "={{ $json.travelDays }}",
+            "budgetLevel": "={{ $json.budgetLevel }}",
+            "interests": "={{ $json.interests }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "travelGroup",
+              "displayName": "travelGroup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budgetLevel",
+              "displayName": "budgetLevel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "travelDays",
+              "displayName": "travelDays",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "interests",
+              "displayName": "interests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "16942a28-68c8-4f2f-9dc1-9b4af9e71f9f",
+      "name": "Store User Preferences",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "tV8QxPCAl7fdEv0z",
+          "mode": "list",
+          "cachedResultName": "TrippoBot_OutputDB",
+          "cachedResultUrl": "/projects/fMufhSNxKBm8KnIm/datatables/tV8QxPCAl7fdEv0z"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Type",
+              "keyValue": "={{ $json.interests }}"
+            },
+            {
+              "keyName": "Budget",
+              "keyValue": "={{ $json.budgetLevel }}"
+            },
+            {
+              "keyName": "Days",
+              "keyValue": "={{ $json.travelDays }}"
+            },
+            {
+              "keyName": "Place",
+              "keyValue": "={{ $json.travelGroup }}"
+            }
+          ]
+        }
+      },
+      "id": "0f2c6e80-4653-4b37-b409-c20799b345e7",
+      "name": "Travel Dataset",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        304
+      ],
+      "alwaysOutputData": true,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "9e330c82-e622-488d-b6cb-2645b3098d59",
+      "name": "Combine Dataset",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=System Instruction:\nYou are Trippo Bot, an expert travel advisor for Sri Lanka. Your goal is to provide exactly 3 different destination recommendations based on user preferences and the travel dataset.\n\nUser Preferences:\nTravel Group: {{ $node[\"Prepare Form Data\"].json[\"travelGroup\"] }}\nNumber of Days: {{ $node[\"Prepare Form Data\"].json[\"travelDays\"] }}\nBudget Level: {{ $node[\"Prepare Form Data\"].json[\"budgetLevel\"] }}\nInterests: {{ $node[\"Prepare Form Data\"].json[\"interests\"] }}\n\nInstructions:\n1. Select exactly 3 distinct destinations from the dataset that best match the user's interests.\n2. For each destination, provide matching activities, hotels, and restaurants.\n3. Respond ONLY with a valid JSON object.\n4. DO NOT include markdown code blocks like ```json or any other text.\n5. IMPORTANT: The fields \"destination\", \"activities\", \"hotels\", and \"restaurants\" MUST be simple strings (text), with items separated by commas.\n\nRequired JSON Structure:\n{\n  \"recommendations\": [\n    {\n      \"destination\": \"Name of Place\",\n      \"description\": \"Short description\",\n      \"activities\": \"Activity 1, Activity 2, Activity 3\",\n      \"hotels\": \"Hotel 1, Hotel 2\",\n      \"restaurants\": \"Restaurant 1, Restaurant 2\"\n    }\n  ],\n  \"summary\": \"A short overall summary of the trip.\"\n}\nOutput only the raw JSON. Do not include any triple backticks or the word 'json'.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are Trippo Bot, an expert travel advisor specializing in Sri Lanka tourism. Your role is to analyze user travel preferences and a dataset of destinations, activities, hotels, and restaurants to create personalized travel recommendations.\n\nAnalyze the user's:\n- Travel group type (family, friends, couple, solo)\n- Number of travel days\n- Budget level (budget, moderate, luxury)\n- Travel interests (adventure, nature, relaxation, culture, food, wildlife, beach, history)\n\nUsing the provided travel dataset, recommend:\n1. Suitable destinations that match their interests and travel style\n2. Activities aligned with their preferences\n3. Hotels that fit their budget level\n4. Restaurants near the recommended destinations\n\nProvide practical, realistic recommendations that can be accomplished within their specified number of days. Consider travel distances and logistics in Sri Lanka."
+        }
+      },
+      "id": "350472bb-5e45-4d8f-aeee-21e60ff48d41",
+      "name": "Travel Recommendation Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1376,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-6",
+              "name": "destination",
+              "value": "={{ $json.output.recommendations[0].destination }}",
+              "type": "string"
+            },
+            {
+              "id": "id-7",
+              "name": "activities",
+              "value": "={{ $json.output.recommendations[0].activities }}",
+              "type": "string"
+            },
+            {
+              "id": "id-8",
+              "name": "hotels",
+              "value": "={{ $json.output.recommendations[0].hotels }}",
+              "type": "string"
+            },
+            {
+              "id": "id-9",
+              "name": "restaurants",
+              "value": "={{ $json.output.recommendations[0].restaurants }}",
+              "type": "string"
+            },
+            {
+              "id": "id-10",
+              "name": "itinerarySummary",
+              "value": "={{ $json.output.recommendations[2].description }}",
+              "type": "string"
+            },
+            {
+              "id": "id-11",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "1810ab5c-2769-473e-83a7-a02998d19907",
+              "name": "recommendation",
+              "value": "={{ $json.output.recommendations[0] }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cb958c9f-21e6-4138-a460-f25d278de4a2",
+      "name": "Prepare Recommendations",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1728,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "i0GKKSg3XaQWEcjC",
+          "mode": "list",
+          "cachedResultName": "recommendations_table",
+          "cachedResultUrl": "/projects/fMufhSNxKBm8KnIm/datatables/i0GKKSg3XaQWEcjC"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "destinations": "={{ $json.destination }}",
+            "Type": "={{ $json.recommendation.interests }}",
+            "budgetLevel": "={{ $json.recommendation.budgetLevel }}",
+            "activities": "={{ $json.recommendation.activities }}",
+            "travelDays": "={{ $json.recommendation.travelDays }}",
+            "restaurants": "={{ $json.recommendation.restaurants }}",
+            "hotels": "={{ $json.recommendation.hotels }}",
+            "itinerarySummary": "={{ $json.recommendation.description }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "destinations",
+              "displayName": "destinations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "budgetLevel",
+              "displayName": "budgetLevel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "travelDays",
+              "displayName": "travelDays",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "activities",
+              "displayName": "activities",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "hotels",
+              "displayName": "hotels",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "restaurants",
+              "displayName": "restaurants",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Best_Season",
+              "displayName": "Best_Season",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "userId",
+              "displayName": "userId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "travelGroup",
+              "displayName": "travelGroup",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "interests",
+              "displayName": "interests",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "itinerarySummary",
+              "displayName": "itinerarySummary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "generatedAt",
+              "displayName": "generatedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "39f25bb3-4dce-4fe4-b1ad-3f16024ac824",
+      "name": "Store Recommendations",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        512
+      ],
+      "id": "5430ea6b-039d-4cca-b261-24fe87746f4d",
+      "name": "Google Gemini Chat Model",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EbEVPlHOayz0wS36",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Travel-Recommendation",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        304
+      ],
+      "id": "2fbd6ad3-fb07-4bd8-addb-2682330884fb",
+      "name": "Webhook",
+      "webhookId": "9206160c-f2de-4841-a195-259e96f5746d"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"recommendations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"destination\": { \"type\": \"string\" },\n          \"description\": { \"type\": \"string\" },\n          \"travelGroup\":{\"type\":\"string\"},\n          \"travelDays\": { \"type\": \"string\" },\n          \"budgetLevel\": { \"type\": \"string\" },\n          \"activities\": { \"type\": \"string\" },\n          \"interests\": { \"type\": \"string\" },\n          \"hotels\": { \"type\": \"string\" },\n          \"restaurants\": { \"type\": \"string\" }\n        }\n      }\n    }\n  }\n}",
+        "autoFix": true
+      },
+      "id": "4f821f31-e336-4f59-af65-35048e4cfbd6",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.recommendations }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2272,
+        400
+      ],
+      "id": "daf33d92-f77b-4adb-afac-eda4cbc6bf16",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        688
+      ],
+      "id": "694e86be-3285-490f-a3e1-c729371caeb8",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EbEVPlHOayz0wS36",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1968,
+        560
+      ],
+      "id": "a7b300c1-f21a-4d2f-a130-28e93c6b8c18",
+      "name": "Loop Over Items"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Prepare Form Data": {
+      "main": [
+        [
+          {
+            "node": "Store User Preferences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store User Preferences": {
+      "main": [
+        [
+          {
+            "node": "Travel Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travel Dataset": {
+      "main": [
+        [
+          {
+            "node": "Combine Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Dataset": {
+      "main": [
+        [
+          {
+            "node": "Travel Recommendation Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travel Recommendation Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Travel Recommendation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Form Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Travel Recommendation Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "fd0bb154-a1d2-4720-8e67-ec312f0fb34a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "88a9208b5e26bea3e679ee11f9ae58fef3a19c27a46d66e8ce2d679cd1f8a348"
+  },
+  "id": "1LbCLYEpCIbTZI96",
+  "tags": []
+}
